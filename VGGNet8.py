@@ -7,7 +7,6 @@ VGGNet8.py
 import os 
 import pickle
 from PIL import Image
-import shutil
 
 # Third Party Libraries
 import numpy as np
@@ -312,8 +311,8 @@ nkerns = [16, 16, 32, 32, 64, 64]
 batch_size = 16
 act_f = elu
 
-w_loc = 'C:\\Users\\lukas\\OneDrive\\Documents\\Machine Learning\\Theano\\Convolutions\\weigths.npy'
-b_loc = 'C:\\Users\\lukas\\OneDrive\\Documents\\Machine Learning\\Theano\\Convolutions\\bias.npy'
+w_loc = 'C:\\...\\weigths.npy'
+b_loc = 'C:\\...\\bias.npy'
 
 weight_all = np.load(w_loc)
 bias_all = np.load(b_loc)
@@ -322,9 +321,7 @@ conv_layer1 = ConvLayer(input=X,
 						filter_shape=(nkerns[0], 3, 3, 3), 
 						image_shape=(batch_size, 3, 360, 400),
 						padding=(0, 0),
-						activation_fn=act_f)#,
-						# weights=weight_all[0],
-						# bias=bias_all[0])
+						activation_fn=act_f)
 # bn_layer1 = BatchNormLayer(input=conv_layer1.output,
 # 						   shape=(batch_size, nkerns[0], 398, 358),
 # 						   activation_fn=None)
@@ -332,8 +329,7 @@ conv_layer2 = ConvLayer(input=conv_layer1.output,
 						filter_shape=(nkerns[1], nkerns[0], 3, 3), 
 						image_shape=(batch_size, nkerns[0], 358, 398),
 						padding=(1, 1),
-						activation_fn=None,
-						weights=weight_all[1])
+						activation_fn=None)
 pool_layer1 = PoolingLayer(input=conv_layer2.output,
 						   activation_fn=act_f)
 
@@ -372,9 +368,7 @@ fc_layer1 = FC(input=fc_layer_input,
 fc_layer2 = FC(input=fc_layer1.output,
 				n_in=33024,
 				n_out=2,
-				activation_fn=act_f)#,
-				# weights=weight_all[-1],
-				# bias=bias_all[-1])
+				activation_fn=act_f)
 
 # without batch normalization
 params = fc_layer2.params + fc_layer1.params \
@@ -591,100 +585,7 @@ def train_model(training_data, validation_data, test_data=None,
 
 
 if __name__ == '__main__':
-	train_loc = 'C:\\Users\\lukas\\Documents\\Kaggle\\Cat_V_Dog\\train\\'
-	val_loc = 'C:\\Users\\lukas\\Documents\\Kaggle\\Cat_V_Dog\\validation\\'
+	train_loc = 'C:\\...\\train\\'
+	val_loc = 'C:\\...\\validation\\'
 
 	train_model(train_loc, val_loc)
-
-# w_loc = 'C:\\Users\\lukas\\Documents\\Kaggle\\Cat_V_Dog\\weights\\weigths.npy'
-# b_loc = 'C:\\Users\\lukas\\Documents\\Kaggle\\Cat_V_Dog\\weights\\bias.npy'
-# accu_loc = 'C:\\Users\\lukas\\Documents\\Kaggle\\Cat_V_Dog\\weights\\accuracy.npy'
-# loss_loc = 'C:\\Users\\lukas\\Documents\\Kaggle\\Cat_V_Dog\\weights\\loss.npy'
-
-# data_train = os.listdir(train_loc)
-# data_val = os.listdir(val_loc)
-# total_values = len(data_train)
-# total_val_values = len(data_val)
-
-# epochs = 1
-# loss, accuracy = 0, 0
-
-# np.random.shuffle(data_train)
-# np.random.shuffle(data_val)
-
-# mini_batches = [data_train[k: k+batch_size]
-# 				for k in range(0, total_values, batch_size)] 
-# validation_batches = [data_val[m: m+batch_size]
-# 					  for m in range(0, total_val_values, batch_size)]
-
-# for mini_batch in mini_batches[:3]:
-# 	data = []
-# 	results = np.zeros((batch_size, 2))
-
-# 	for i, filename in enumerate(mini_batch):
-# 		temp_file = train_loc + str(filename)
-# 		im = Image.open(temp_file)
-# 		data.append(im.getdata())
-
-# 		if 	filename[0] == 'c':
-# 			results[i] = [1, 0]
-# 		else:
-# 			results[i] = [0, 1]
-
-# 	data = np.asarray(data)
-# 	data = data.reshape(batch_size, 3, 360, 400)
-
-# 	loss += train(data, results, 1e-4)
-
-# for val_batch in validation_batches[:2]:
-# 	val_data = []
-# 	val_results = np.zeros(batch_size, dtype=np.int8)
-
-# 	for i, filename in enumerate(val_batch):
-# 		temp_file = val_loc + str(filename)
-# 		im = Image.open(temp_file)
-# 		val_data.append(im.getdata())
-
-# 		if 	filename[0] == 'c':
-# 			val_results[i] = np.int8(1)
-# 		else:
-# 			val_results[i] = np.int(0)
-
-# 	val_data = np.asarray(val_data)
-# 	val_data = val_data.reshape(batch_size, 3, 360, 400)
-
-# 	accuracy += accu(val_data, val_results)
-
-weigths_conv1 = conv_layer1.W.get_value()
-weigths_conv2 = conv_layer2.W.get_value()
-weigths_conv3 = conv_layer3.W.get_value()
-weigths_conv4 = conv_layer4.W.get_value()
-weigths_conv5 = conv_layer5.W.get_value()
-weigths_conv6 = conv_layer6.W.get_value()
-
-bias_conv1 = conv_layer1.b.get_value()
-bias_conv2 = conv_layer2.b.get_value()
-bias_conv3 = conv_layer3.b.get_value()
-bias_conv4 = conv_layer4.b.get_value()
-bias_conv5 = conv_layer5.b.get_value()
-bias_conv6 = conv_layer6.b.get_value()
-
-weigths_fc1 = fc_layer1.W.get_value()
-weigths_fc2 = fc_layer2.W.get_value()
-
-bias_fc1 = fc_layer1.b.get_value()
-bias_fc2 = fc_layer2.b.get_value()
-
-vgg_weights = [weigths_conv1, weigths_conv2, weigths_conv3, 
-			   weigths_conv4, weigths_conv5, weigths_conv6,
-			   weigths_fc1, weigths_fc2]
-vgg_bias = [bias_conv1, bias_conv2, bias_conv3, bias_conv4, bias_conv5, 
-			bias_conv6, bias_fc1, bias_fc2]
-
-# vgg_accuracy = np.asarray([accuracy])
-# vgg_loss = np.asarray([loss])
-
-# np.save(accu_loc, vgg_accuracy)
-# np.save(loss_loc, vgg_loss)
-# np.save(w_loc, vgg_weights)
-# np.save(b_loc, vgg_bias)
