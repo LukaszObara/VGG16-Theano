@@ -307,7 +307,7 @@ Y = T.imatrix(name='Y')
 y = T.ivector(name='y')
 lr = T.scalar(name='learning_rate', dtype=theano.config.floatX)
 
-nkerns = [16, 16, 32, 32, 64, 64]
+nkerns = [4, 4, 8, 8, 16, 16]
 batch_size = 16
 act_f = elu
 
@@ -363,10 +363,10 @@ fc_layer_input = pool_layer3.output.flatten(2)
 
 fc_layer1 = FC(input=fc_layer_input,
 			   n_in=nkerns[5] * 48 * 43,
-			   n_out=33024,
+			   n_out=1024,
 			   activation_fn=act_f)
 fc_layer2 = FC(input=fc_layer1.output,
-				n_in=33024,
+				n_in=1024,
 				n_out=2,
 				activation_fn=act_f)
 
