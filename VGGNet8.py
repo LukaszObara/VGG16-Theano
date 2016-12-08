@@ -20,7 +20,7 @@ from theano.tensor.signal import pool
 def elu(x, alpha=1.0):
 	return T.switch(x > 0, x, T.exp(x)-1)
 
-def l2_reg(x, lmbd=0.05):
+def l2_reg(x, lmbd=5e-4):
 	"""
 	L_2 regularization 
 
@@ -298,7 +298,6 @@ class FC(object):
 		self.params = [self.W, self.b]
 		
 ########################################################################
-
 # Model
 print('---Building VGG8---')
 
@@ -307,27 +306,21 @@ Y = T.imatrix(name='Y')
 y = T.ivector(name='y')
 lr = T.scalar(name='learning_rate', dtype=theano.config.floatX)
 
-nkerns = [4, 4, 8, 8, 16, 16]
-batch_size = 16
+nkerns = [16, 16, 32, 32, 64, 64]
+batch_size = 2
 act_f = elu
-
-w_loc = 'C:\\...\\weigths.npy'
-b_loc = 'C:\\...\\bias.npy'
-
-weight_all = np.load(w_loc)
-bias_all = np.load(b_loc)
 
 conv_layer1 = ConvLayer(input=X, 
 						filter_shape=(nkerns[0], 3, 3, 3), 
-						image_shape=(batch_size, 3, 360, 400),
-						padding=(0, 0),
+						image_shape=(batch_size, 3, 256, 256),
+						padding=(1, 1),
 						activation_fn=act_f)
 # bn_layer1 = BatchNormLayer(input=conv_layer1.output,
-# 						   shape=(batch_size, nkerns[0], 398, 358),
+# 						   shape=(batch_size, nkerns[0], 256, 256),
 # 						   activation_fn=None)
 conv_layer2 = ConvLayer(input=conv_layer1.output, 
 						filter_shape=(nkerns[1], nkerns[0], 3, 3), 
-						image_shape=(batch_size, nkerns[0], 358, 398),
+						image_shape=(batch_size, nkerns[0], 256, 256),
 						padding=(1, 1),
 						activation_fn=None)
 pool_layer1 = PoolingLayer(input=conv_layer2.output,
@@ -335,12 +328,12 @@ pool_layer1 = PoolingLayer(input=conv_layer2.output,
 
 conv_layer3 = ConvLayer(input=pool_layer1.output, 
 						filter_shape=(nkerns[2], nkerns[1], 3, 3), 
-						image_shape=(batch_size, nkerns[1], 179, 199),
-						padding=(0, 0),
+						image_shape=(batch_size, nkerns[1], 128, 128),
+						padding=(1, 1),
 						activation_fn=act_f)
 conv_layer4 = ConvLayer(input=conv_layer3.output, 
 						filter_shape=(nkerns[3], nkerns[2], 3, 3), 
-						image_shape=(batch_size, nkerns[2], 177, 197),
+						image_shape=(batch_size, nkerns[2], 128, 128),
 						padding=(1, 1),
 						activation_fn=None)
 pool_layer2 = PoolingLayer(input=conv_layer4.output,
@@ -348,12 +341,12 @@ pool_layer2 = PoolingLayer(input=conv_layer4.output,
 
 conv_layer5 = ConvLayer(input=pool_layer2.output, 
 						filter_shape=(nkerns[4], nkerns[3], 3, 3), 
-						image_shape=(batch_size, nkerns[3], 88, 98),
-						padding=(0, 0),
+						image_shape=(batch_size, nkerns[3], 64, 64),
+						padding=(1, 1),
 						activation_fn=act_f)
 conv_layer6 = ConvLayer(input=conv_layer5.output, 
 						filter_shape=(nkerns[5], nkerns[4], 3, 3), 
-						image_shape=(batch_size, nkerns[4], 86, 96),
+						image_shape=(batch_size, nkerns[4], 64, 64),
 						padding=(1, 1),
 						activation_fn=None)
 pool_layer3 = PoolingLayer(input=conv_layer6.output,
@@ -362,7 +355,7 @@ pool_layer3 = PoolingLayer(input=conv_layer6.output,
 fc_layer_input = pool_layer3.output.flatten(2) 
 
 fc_layer1 = FC(input=fc_layer_input,
-			   n_in=nkerns[5] * 48 * 43,
+			   n_in=nkerns[5] * 32 * 32,
 			   n_out=1024,
 			   activation_fn=act_f)
 fc_layer2 = FC(input=fc_layer1.output,
@@ -505,20 +498,20 @@ train = theano.function(inputs=[X, Y, lr], outputs=cost,
 										grads=grads),
 						allow_input_downcast=True)
 
-# Validation results
+# # Validation results
 pred_result = cost_input.argmax(axis=1)
 accu = theano.function(inputs=[X, y], outputs=T.sum(T.eq(pred_result, y)), 
 					   allow_input_downcast=True)
 
-# pred = theano.function(inputs=[X], outputs=pred_result, 
-# 					   allow_input_downcast=True)
+# # pred = theano.function(inputs=[X], outputs=pred_result, 
+# # 					   allow_input_downcast=True)
 
 print('Finished Building VGG8')
 
 ########################################################################
 
 def train_model(training_data, validation_data, test_data=None,
-				learning_rate=1e-3, epochs=15):
+				learning_rate=1e-3, epochs=75):
 
 	print('---Training Model---')
 
@@ -544,7 +537,7 @@ def train_model(training_data, validation_data, test_data=None,
 			results = np.zeros((batch_size, 2))
 
 			for i, filename in enumerate(mini_batch):
-				temp_file = train_loc + str(filename)
+				temp_file = training_data + str(filename)
 				im = Image.open(temp_file)
 				data.append(im.getdata())
 
@@ -554,7 +547,7 @@ def train_model(training_data, validation_data, test_data=None,
 					results[i] = [0, 1]
 
 			data = np.asarray(data)
-			data = data.reshape(batch_size, 3, 360, 400)
+			data = data.reshape(batch_size, 3, 256, 256)
 
 			training_cost += train(data, results, learning_rate)
 
@@ -563,7 +556,7 @@ def train_model(training_data, validation_data, test_data=None,
 			val_results = np.zeros(batch_size, dtype=np.int8)
 
 			for i, filename in enumerate(val_batch):
-				temp_file = val_loc + str(filename)
+				temp_file = validation_data + str(filename)
 				im = Image.open(temp_file)
 				val_data.append(im.getdata())
 
@@ -573,7 +566,7 @@ def train_model(training_data, validation_data, test_data=None,
 					val_results[i] = np.int(0)
 
 			val_data = np.asarray(val_data)
-			val_data = val_data.reshape(batch_size, 3, 360, 400)
+			val_data = val_data.reshape(batch_size, 3, 256, 256)
 
 			accuracy += accu(val_data, val_results)
 
@@ -585,7 +578,7 @@ def train_model(training_data, validation_data, test_data=None,
 
 
 if __name__ == '__main__':
-	train_loc = 'C:\\...\\train\\'
-	val_loc = 'C:\\...\\validation\\'
+	t_loc = 'C:\\...\\train\\'
+	v_loc = 'C:\\...\\validation\\'
 
-	train_model(train_loc, val_loc)
+	train_model(t_loc, v_loc, learning_rate=1e-2, epochs=10)
