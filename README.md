@@ -4,7 +4,7 @@ The project expands on the work done in <a href="https://github.com/LukaszObara/
 ### Architecture
 The base network consist of a series of convolutional layers, pooling layers, and fully connected layers. The network that we built will also include a series of batch normalization layers between before each pooling layer, and a drop-out layer between the fully connected layers. We use an `Exponential Linear Unit (ELU)` as our activation function we train our network using `RMSProp`.  The diagram below illustrates the architecture:
 
-<p align="center"><img src="https://github.com/LukaszObara/VGG16-Theano/blob/master/images/Archit.png" height="2000"></p>
+<p align="center"><img src="https://github.com/LukaszObara/VGG16-Theano/blob/master/images/Archit.png" height="1000"></p>
 
 # References
 <ol>
