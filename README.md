@@ -4,8 +4,7 @@ The project expands on the work done in <a href="https://github.com/LukaszObara/
 ### Architecture
 The base network consist of a series of convolutional layers, pooling layers, and fully connected layers. The network that we built will also include a series of batch normalization layers between before each pooling layer, and a drop-out layer between the fully connected layers. We use an `Exponential Linear Unit (ELU)` as our activation function we train our network using `RMSProp`.  The diagram below illustrates the architecture:
 
-![Alt text](https://github.com/LukaszObara/VGG16-Theano/blob/master/images/Archit.png "VGG16").
-<img src="https://github.com/favicon.ico" height="1000">
+<div style="text-align:center"><img src="https://github.com/LukaszObara/VGG16-Theano/blob/master/images/Archit.png" height="1000"></div>
 
 # References
 <ol>
@@ -19,5 +18,5 @@ The base network consist of a series of convolutional layers, pooling layers, an
 <li>Srivastava Nitish et al., <em>Dropout: A Simple Way to Prevent Neural Networks from Overfitting</em>, JMLR, 2014, 
 </ol>
 
-# Disclaimer
+## Disclaimer
 The network was tested on AWS using the `Dogs vs. Cats` data available on [Kaggle](https://www.kaggle.com/c/dogs-vs-cats-redux-kernels-edition). Due to financial limitation the network was test for only 50 epochs. 
