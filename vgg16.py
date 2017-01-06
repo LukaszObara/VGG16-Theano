@@ -1,6 +1,5 @@
 # VGGNet16.py
 
-
 #### Libraries
 # Standard Libraries
 import os 
