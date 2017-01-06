@@ -1,6 +1,4 @@
-"""
-VGGNet16.py
-"""
+# VGGNet16.py
 
 #### Libraries
 # Standard Libraries
@@ -11,7 +9,6 @@ import shutil
 
 # Third Party Libraries
 import numpy as np
-import pandas as pd
 from sklearn.model_selection import train_test_split
 import theano
 import theano.tensor as T
@@ -307,8 +304,8 @@ Y = T.imatrix(name='Y')
 y = T.ivector(name='y')
 lr = T.scalar(name='learning_rate', dtype=theano.config.floatX)
 
-nkerns = [32, 32, 64, 64, 128, 128, 128, 256, 256, 256, 256, 256, 256]
-batch_size = 4
+nkerns = [32, 32, 64, 64, 128, 128, 128, 256, 256, 256, 512, 512, 512]
+batch_size = 32
 act_f = elu
 
 conv_layer1 = ConvLayer(input=X, 
@@ -316,15 +313,15 @@ conv_layer1 = ConvLayer(input=X,
 						image_shape=(batch_size, 3, 256, 256),
 						padding=(1, 1),
 						activation_fn=act_f)
-# bn_layer1 = BatchNormLayer(input=conv_layer1.output,
-# 						   shape=(batch_size, nkerns[0], 256, 256),
-# 						   activation_fn=None)
 conv_layer2 = ConvLayer(input=conv_layer1.output, 
 						filter_shape=(nkerns[1], nkerns[0], 3, 3), 
 						image_shape=(batch_size, nkerns[0], 256, 256),
 						padding=(1, 1),
 						activation_fn=None)
-pool_layer1 = PoolingLayer(input=conv_layer2.output,
+bn_layer1 = BatchNormLayer(input=conv_layer2.output,
+						   shape=(batch_size, nkerns[0], 256, 256),
+						   activation_fn=None)
+pool_layer1 = PoolingLayer(input=bn_layer1.output,
 						   activation_fn=act_f)
 
 conv_layer3 = ConvLayer(input=pool_layer1.output, 
@@ -337,7 +334,10 @@ conv_layer4 = ConvLayer(input=conv_layer3.output,
 						image_shape=(batch_size, nkerns[2], 128, 128),
 						padding=(1, 1),
 						activation_fn=None)
-pool_layer2 = PoolingLayer(input=conv_layer4.output,
+bn_layer2 = BatchNormLayer(input=conv_layer4.output,
+						   shape=(batch_size, nkerns[2], 128, 128),
+						   activation_fn=None)
+pool_layer2 = PoolingLayer(input=bn_layer2.output,
 						   activation_fn=act_f)
 
 conv_layer5 = ConvLayer(input=pool_layer2.output, 
@@ -355,7 +355,10 @@ conv_layer7 = ConvLayer(input=conv_layer6.output,
 						image_shape=(batch_size, nkerns[5], 64, 64),
 						padding=(1, 1),
 						activation_fn=None)
-pool_layer3 = PoolingLayer(input=conv_layer7.output,
+bn_layer3 = BatchNormLayer(input=conv_layer7.output,
+						   shape=(batch_size, nkerns[5], 64, 64),
+						   activation_fn=None)
+pool_layer3 = PoolingLayer(input=bn_layer3.output,
 						   activation_fn=act_f)
 
 conv_layer8 = ConvLayer(input=pool_layer3.output, 
@@ -373,7 +376,10 @@ conv_layer10 = ConvLayer(input=conv_layer9.output,
 						image_shape=(batch_size, nkerns[8], 32, 32),
 						padding=(1, 1),
 						activation_fn=None)
-pool_layer4 = PoolingLayer(input=conv_layer10.output,
+bn_layer4 = BatchNormLayer(input=conv_layer10.output,
+						   shape=(batch_size, nkerns[8], 32, 32),
+						   activation_fn=None)
+pool_layer4 = PoolingLayer(input=bn_layer4.output,
 						   activation_fn=act_f)
 
 conv_layer11 = ConvLayer(input=pool_layer4.output, 
@@ -391,7 +397,10 @@ conv_layer13 = ConvLayer(input=conv_layer12.output,
 						image_shape=(batch_size, nkerns[11], 16, 16),
 						padding=(1, 1),
 						activation_fn=None)
-pool_layer5 = PoolingLayer(input=conv_layer13.output,
+bn_layer5 = BatchNormLayer(input=conv_layer13.output,
+						   shape=(batch_size, nkerns[11], 16, 16),
+						   activation_fn=None)
+pool_layer5 = PoolingLayer(input=bn_layer5.output,
 						   activation_fn=act_f)
 
 fc_layer_input = pool_layer5.output.flatten(2) 
@@ -411,9 +420,15 @@ fc_layer3 = FC(input=fc_layer1.output,
 
 # without batch normalization
 params = fc_layer3.params + fc_layer2.params + fc_layer1.params \
+	   + bn_layer5.params \
+	   + conv_layer13.params + conv_layer12.params + conv_layer11.params \
+	   + bn_layer4.params \
 	   + conv_layer10.params + conv_layer9.params + conv_layer8.params \
+	   + bn_layer4.params \
 	   + conv_layer7.params + conv_layer6.params + conv_layer5.params \
+	   + bn_layer2.params \
 	   + conv_layer4.params + conv_layer3.params \
+	   + bn_layer1.params \
 	   + conv_layer2.params + conv_layer1.params
 
 cost_input = T.nnet.nnet.softmax(fc_layer3.output)
@@ -421,46 +436,6 @@ cost = T.mean(T.nnet.nnet.categorical_crossentropy(cost_input, Y)) \
 	 + l2_reg(params)
 
 grads = T.grad(cost, params)
-
-# def momentum(l_rate, parameters, grads, momentum=0.9):
-# 	"""
-# 	Momentum update
-
-# 	Parameters
-# 	----------
-# 	:type lr: theano.tensor.scalar
-# 	:param lr: Initial learning rate
-	
-# 	:type parameters: theano.shared
-# 	:params parameters: Model parameters to update
-
-# 	:type grads: Theano variable
-# 	:params grads: Gradients of cost w.r.t to parameters
-
-# 	:type momentum: float32
-# 	:params momentum: 
-# 	"""
-
-# 	def update_rule(param, velocity, df):
-# 		v_next = momentum * velocity - l_rate * df
-# 		updates = (param, param+v_next), (velocity, v_next)
-
-# 		return updates
-
-# 	assert momentum <=1 and momentum >= 0
-	
-# 	velocities = [theano.shared(name='v_%s' % param,
-# 								value=param.get_value() * 0., 
-# 								broadcastable=param.broadcastable) 
-# 				  for param in parameters]
-
-# 	updates = []
-# 	for p, v, g in zip(parameters, velocities, grads):
-# 		param_updates, vel_updates = update_rule(p, v, g)
-# 		updates.append(param_updates)
-# 		updates.append(vel_updates)
-
-# 	return updates
 
 def rmsprop(l_rate, d_rate=0.9, epsilon=1e-6, parameters=None, grads=None):
 	"""
@@ -490,7 +465,7 @@ def rmsprop(l_rate, d_rate=0.9, epsilon=1e-6, parameters=None, grads=None):
 
 		return updates
 	
-	caches = [theano.shared(name='c_%s' % param,
+	caches = [theano.shared(name='c_{}'.format(param),
 							value=param.get_value() * 0., 
 							broadcastable=param.broadcastable) 
 			  for param in parameters]
@@ -519,12 +494,12 @@ def adam(l_rate, beta1=0.9, beta2=0.999, epsilon=1e-6, parameters=None,
 
 		return updates
 	
-	moments = [theano.shared(name='m_%s' % param,
+	moments = [theano.shared(name='m_{}'.format(param),
 							 value=param.get_value() * 0., 
 							 broadcastable=param.broadcastable) 
 			   for param in parameters]
 
-	velocities = [theano.shared(name='v_%s' % param,
+	velocities = [theano.shared(name='v_{}'.format(param),
 								value=param.get_value() * 0., 
 								broadcastable=param.broadcastable) 
 				  for param in parameters]
@@ -565,7 +540,8 @@ def train_model(training_data, validation_data, test_data=None,
 	data_train = os.listdir(training_data)
 	data_val = os.listdir(validation_data)
 
-	total_values, total_val_values = len(training_data), len(validation_data) 
+	total_values, total_val_values = len(data_train), len(data_val) 
+	print(total_values, total_val_values)
 
 	for epoch in range(epochs):
 		print('Currently on epoch {}'.format(epoch+1))
@@ -623,10 +599,9 @@ def train_model(training_data, validation_data, test_data=None,
 
 	print('Done')
 
-
 if __name__ == '__main__':
-	pass
-	t_loc = 'C:\\...\\train\\'
-	v_loc = 'C:\\...\\validation\\'
+	t_loc = '/home/ubuntu/cat_v_dog/train/'
+	v_loc = '/home/ubuntu/cat_v_dog/validation/'
 
-	train_model(t_loc, v_loc, learning_rate=1e-4, epochs=100)
+	train_model(t_loc, v_loc, learning_rate=1e-3, epochs=51)
+	
