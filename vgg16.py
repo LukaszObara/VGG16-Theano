@@ -1,5 +1,6 @@
 # VGGNet16.py
 
+
 #### Libraries
 # Standard Libraries
 import os 
@@ -294,6 +295,44 @@ class FC(object):
 
 		# Parameters of the fully connected layer
 		self.params = [self.W, self.b]
+
+def dropout_from_layer(layer, p, seed=35):
+    """
+    p is the probablity of dropping a unit
+
+    Parameters
+	----------
+	:type rng: numpy.random.RandomState
+	:param rng: a random number generator used to initialize weights
+
+	:type layer: 
+	:param layer: Input layer to perform dropout
+
+	:type p: float32
+	:param p: Probablity of dropping a unit
+
+	Returns
+	-------
+
+	References
+	----------
+	.. [1] https://www.cs.toronto.edu/~hinton/absps/JMLRdropout.pdf
+    """
+
+    srng = T.shared_randomstreams.RandomStreams(seed=seed)
+    mask = srng.binomial(n=1, p=1-p, size=layer.shape)
+    output = layer * T.cast(mask, theano.config.floatX)
+
+    return output
+
+class Dropout(FC):
+	def __init__(self, input, n_in, n_out, W=None, b=None, seed=35,
+				 activation_fn=None, dropout_rate=0.5): 
+
+		super().__init__(input=input, n_in=n_in, n_out=n_out, W=W, b=b, 
+						 seed=seed, activation_fn=activation_fn)
+
+		self.output = dropout_from_layer(self.output, p=dropout_rate, seed=seed)
 		
 ########################################################################
 # Model
@@ -409,14 +448,36 @@ fc_layer1 = FC(input=fc_layer_input,
 			   n_in=nkerns[-1] * 8 * 8,
 			   n_out=512,
 			   activation_fn=act_f)
-fc_layer2 = FC(input=fc_layer1.output,
+dropout_layer1 = Dropout(fc_layer1.output,
+						 n_in=512, 
+						 n_out=512,
+						 activation_fn=None)
+fc_layer2 = FC(input=dropout_layer1.output,
 				n_in=512,
 				n_out=512,
 				activation_fn=act_f)
-fc_layer3 = FC(input=fc_layer1.output,
+dropout_layer2 = Dropout(fc_layer2.output,
+						 n_in=512, 
+						 n_out=512,
+						 activation_fn=None)
+fc_layer3 = FC(input=dropout_layer2.output,
 				n_in=512,
 				n_out=2,
 				activation_fn=act_f)
+
+# For accuracy and predictive pruposes. It reestablishes the cells. 
+fc_layer2_no_drop = FC(input=fc_layer1.output,
+					   n_in=512,
+					   n_out=512,
+					   W=fc_layer2.W,
+					   b=fc_layer2.b,
+					   activation_fn=act_f)
+fc_layer3_no_drop = FC(input=fc_layer2.output,
+					   n_in=512,
+					   n_out=2,
+					   W=fc_layer2.W,
+					   b=fc_layer2.b,
+					   activation_fn=act_f)
 
 # without batch normalization
 params = fc_layer3.params + fc_layer2.params + fc_layer1.params \
@@ -436,6 +497,9 @@ cost = T.mean(T.nnet.nnet.categorical_crossentropy(cost_input, Y)) \
 	 + l2_reg(params)
 
 grads = T.grad(cost, params)
+
+# No dropout
+cost_input_no_drop = T.nnet.nnet.softmax(fc_layer3_no_drop.output)
 
 def rmsprop(l_rate, d_rate=0.9, epsilon=1e-6, parameters=None, grads=None):
 	"""
@@ -520,13 +584,13 @@ train = theano.function(inputs=[X, Y, lr], outputs=cost,
 									 grads=grads),
 						allow_input_downcast=True)
 
-# # Validation results
-pred_result = cost_input.argmax(axis=1)
+# Validation results
+pred_result = cost_input_no_drop.argmax(axis=1)
 accu = theano.function(inputs=[X, y], outputs=T.sum(T.eq(pred_result, y)), 
 					   allow_input_downcast=True)
 
-# # pred = theano.function(inputs=[X], outputs=pred_result, 
-# # 					   allow_input_downcast=True)
+# pred = theano.function(inputs=[X], outputs=pred_result, 
+# 					   allow_input_downcast=True)
 
 print('Finished Building VGG16')
 
