@@ -13,10 +13,11 @@ The base network consist of a series of convolutional layers, pooling layers, an
 <li>Goodfellow Ian, Bengio Yoshua, Courville Aaron, <em>Deep Learning</em>, MIT Press, 2016, http://www.deeplearningbook.org</li>
 <li>He Kaiming et al., <em>Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification</em>, ICCV, 2015, pp. 1026-1034</li>
 <li>Ioffe Sergey, Szegedy Christian, <em>Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift</em>, JMLR, 2015 https://arxiv.org/abs/1502.03167</li>
+<li>Krizhevsky Alex, Sutskever Ilya, Hinton Geoffrey E., <em>ImageNet Classification with Deep Convolutional Neural Networks</em>, NIPS, 2012, https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf</li>
 <li>LeCun Yann et al., <em>Gradient-Based Learning Applied to Document Recognition</em>, PROC. OF THE IEEE., Nov 1998</li>
 <li>Simonyan Karen, Zisserman Andrew, <em>Very Deep convolutional netowrks for large-scale image recognition</em>, ICLR 2015, https://arxiv.org/pdf/1409.1556.pdf</li>
 <li>Srivastava Nitish et al., <em>Dropout: A Simple Way to Prevent Neural Networks from Overfitting</em>, JMLR, 2014, 
 </ol>
 
 ## Disclaimer
-The network was tested on AWS using the `Dogs vs. Cats` data available on [Kaggle](https://www.kaggle.com/c/dogs-vs-cats-redux-kernels-edition). Due to financial limitation the network was test for only 50 epochs. 
+The network was tested on AWS using the `Dogs vs. Cats` data available on [Kaggle](https://www.kaggle.com/c/dogs-vs-cats-redux-kernels-edition). Due to financial limitation the network was test for only 51 epochs. 
