@@ -338,7 +338,7 @@ class Dropout(FC):
 print('---Building VGG16---')
 
 X = T.tensor4(name='X', dtype=theano.config.floatX) 
-Y = T.imatrix(name='Y')
+# Y = T.imatrix(name='Y')
 y = T.ivector(name='y')
 lr = T.scalar(name='learning_rate', dtype=theano.config.floatX)
 
@@ -461,7 +461,7 @@ dropout_layer2 = Dropout(fc_layer2.output,
 						 activation_fn=None)
 fc_layer3 = FC(input=dropout_layer2.output,
 				n_in=512,
-				n_out=2,
+				n_out=1,
 				activation_fn=act_f)
 
 # For accuracy and predictive pruposes. It reestablishes the cells. 
@@ -473,9 +473,9 @@ fc_layer2_no_drop = FC(input=fc_layer1.output,
 					   activation_fn=act_f)
 fc_layer3_no_drop = FC(input=fc_layer2.output,
 					   n_in=512,
-					   n_out=2,
-					   W=fc_layer2.W,
-					   b=fc_layer2.b,
+					   n_out=1,
+					   W=fc_layer3.W,
+					   b=fc_layer3.b,
 					   activation_fn=act_f)
 
 # without batch normalization
@@ -491,8 +491,8 @@ params = fc_layer3.params + fc_layer2.params + fc_layer1.params \
 	   + bn_layer1.params \
 	   + conv_layer2.params + conv_layer1.params
 
-cost_input = T.nnet.nnet.softmax(fc_layer3.output)
-cost = T.mean(T.nnet.nnet.categorical_crossentropy(cost_input, Y)) \
+cost_input = fc_layer3.output
+cost = T.mean(T.nnet.nnet.binary_crossentropy(cost_input.flatten(), y)) \
 	 + l2_reg(params)
 
 grads = T.grad(cost, params)
@@ -578,18 +578,16 @@ def adam(l_rate, beta1=0.9, beta2=0.999, epsilon=1e-6, parameters=None,
 	return updates
 
 # theano functions for training and validation 
-train = theano.function(inputs=[X, Y, lr], outputs=cost, 
+train = theano.function(inputs=[X, y, lr], outputs=cost, 
 						updates=adam(l_rate=lr, parameters=params, 
 									 grads=grads),
 						allow_input_downcast=True)
 
 # Validation results
-pred_result = cost_input_no_drop.argmax(axis=1)
-accu = theano.function(inputs=[X, y], outputs=T.sum(T.eq(pred_result, y)), 
+pred = theano.function(inputs=[X, y], outputs=cost>0.5, 
 					   allow_input_downcast=True)
-
-# pred = theano.function(inputs=[X], outputs=pred_result, 
-# 					   allow_input_downcast=True)
+accu = theano.function(inputs=[X, y], outputs=T.mean(T.eq((cost>0.5), y)), 
+					   allow_input_downcast=True)
 
 print('Finished Building VGG16')
 
@@ -636,7 +634,8 @@ def train_model(training_data, validation_data, test_data=None,
 			data = data.reshape(batch_size, 3, 256, 256)
 
 			training_cost += train(data, results, learning_rate)
-
+			
+		num = 0
 		for val_batch in validation_batches:
 			val_data = []
 			val_results = np.zeros(batch_size, dtype=np.int8)
@@ -655,16 +654,18 @@ def train_model(training_data, validation_data, test_data=None,
 			val_data = val_data.reshape(batch_size, 3, 256, 256)
 
 			accuracy += accu(val_data, val_results)
+			num += 1
 
-		print('The accuracy is: {}'.format(accuracy/total_val_values))
+		print('The accuracy is: {}'.format(accuracy/num))
 		print('The loss is: {}'.format(training_cost/total_values))
 		print('--------------------------')
 
 	print('Done')
 
 if __name__ == '__main__':
-	t_loc = '/home/ubuntu/cat_v_dog/train/'
-	v_loc = '/home/ubuntu/cat_v_dog/validation/'
+# 	t_loc = '/home/ubuntu/cat_v_dog/train/'
+# 	v_loc = '/home/ubuntu/cat_v_dog/validation/'
 
-	train_model(t_loc, v_loc, learning_rate=1e-3, epochs=51)
+# 	train_model(t_loc, v_loc, learning_rate=1e-3, epochs=51)
+	pass
 	
